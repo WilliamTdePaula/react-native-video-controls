@@ -112,7 +112,7 @@ export default class VideoPlayer extends Component {
             seekPanResponder: PanResponder,
             controlTimeout: null,
             volumeWidth: 150,
-            iconOffset: 0,
+            iconOffset: 7,
             seekWidth: 0,
             ref: Video,
         };
@@ -134,10 +134,6 @@ export default class VideoPlayer extends Component {
             video: {
                 opacity: new Animated.Value( 1 ),
             },
-            loader: {
-                rotate: new Animated.Value( 0 ),
-                MAX_VALUE: 360,
-            }
         };
 
         /**
@@ -169,7 +165,6 @@ export default class VideoPlayer extends Component {
     _onLoadStart() {
         let state = this.state;
         state.loading = true;
-        this.loadAnimation();
         this.setState( state );
 
         if ( typeof this.props.onLoadStart === 'function' ) {
@@ -360,41 +355,17 @@ export default class VideoPlayer extends Component {
     /**
      * Loop animation to spin loader icon. If not loading then stop loop.
      */
-    loadAnimation() {
-        if ( this.state.loading ) {
-            Animated.sequence([
-                Animated.timing(
-                    this.animations.loader.rotate,
-                    {
-                        toValue: this.animations.loader.MAX_VALUE,
-                        duration: 1500,
-                        easing: Easing.linear,
-                    }
-                ),
-                Animated.timing(
-                    this.animations.loader.rotate,
-                    {
-                        toValue: 0,
-                        duration: 0,
-                        easing: Easing.linear,
-                    }
-                ),
-            ]).start( this.loadAnimation.bind( this ) );
-        }
-    }
 
     /**
      * Function to hide the controls. Sets our
      * state then calls the animation.
      */
     _hideControls() {
-        if(this.mounted) {
-            let state = this.state;
-            state.showControls = false;
-            this.hideControlAnimation();
+        let state = this.state;
+        state.showControls = false;
+        this.hideControlAnimation();
 
-            this.setState( state );
-        }
+        this.setState( state );
     }
 
     /**
@@ -646,7 +617,7 @@ export default class VideoPlayer extends Component {
      * @return {float} volume handle position in px based on volume
      */
     calculateVolumePositionFromVolume() {
-        return this.player.volumeWidth * this.state.volume;
+        return this.player.volumeWidth / this.state.volume;
     }
 
 
@@ -692,7 +663,6 @@ export default class VideoPlayer extends Component {
         let state = this.state;
         this.setVolumePosition( position );
         state.volumeOffset = position;
-        this.mounted = true;
 
         this.setState( state );
     }
@@ -702,7 +672,6 @@ export default class VideoPlayer extends Component {
      * timeout less it fire in the prev/next scene
      */
     componentWillUnmount() {
-        this.mounted = false;
         this.clearControlTimeout();
     }
 
@@ -1061,39 +1030,7 @@ export default class VideoPlayer extends Component {
         );
     }
 
-    /**
-     * Show loading icon
-     */
-    renderLoader() {
-        if ( this.state.loading ) {
-            return (
-                <View style={ styles.loader.container }>
-                    <Animated.Image source={ require( './assets/img/loader-icon.png' ) } style={[
-                        styles.loader.icon,
-                        { transform: [
-                            { rotate: this.animations.loader.rotate.interpolate({
-                                inputRange: [ 0, 360 ],
-                                outputRange: [ '0deg', '360deg' ]
-                            })}
-                        ]}
-                    ]} />
-                </View>
-            );
-        }
-        return null;
-    }
-
     renderError() {
-        if ( this.state.error ) {
-            return (
-                <View style={ styles.error.container }>
-                    <Image source={ require( './assets/img/error-icon.png' ) } style={ styles.error.icon } />
-                    <Text style={ styles.error.text }>
-                        Video unavailable
-                    </Text>
-                </View>
-            );
-        }
         return null;
     }
 
@@ -1129,7 +1066,6 @@ export default class VideoPlayer extends Component {
                     />
                     { this.renderError() }
                     { this.renderTopControls() }
-                    { this.renderLoader() }
                     { this.renderBottomControls() }
                 </View>
             </TouchableWithoutFeedback>
@@ -1302,9 +1238,6 @@ const styles = {
             marginTop: -24,
             marginLeft: -24,
             padding: 16,
-        },
-        icon: {
-            marginLeft:7
         }
     }),
     seekbar: StyleSheet.create({
